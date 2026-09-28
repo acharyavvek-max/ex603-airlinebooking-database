@@ -1,0 +1,168 @@
+-- =================================================================
+-- EX 603 Assignment 2 — schema.sql
+-- Theme: Airline Booking System
+-- Target: PostgreSQL 14+
+-- Database: airlinebooking
+-- Schema: airlinebooking
+-- =================================================================
+
+
+-- =================================================================
+-- CONNECT TO DATABASE
+-- NOTE: \connect is a psql command
+-- =================================================================
+
+\connect airlinebooking
+
+
+-- =================================================================
+-- CREATE AND USE SCHEMA
+-- =================================================================
+
+CREATE SCHEMA IF NOT EXISTS airlinebooking;
+
+SET search_path TO airlinebooking;
+
+
+-- =================================================================
+-- RESET BLOCK
+-- Reverse creation order
+-- =================================================================
+
+DROP TABLE IF EXISTS airlinebooking.bookings CASCADE;
+DROP TABLE IF EXISTS airlinebooking.flights CASCADE;
+DROP TABLE IF EXISTS airlinebooking.flight_routes CASCADE;
+DROP TABLE IF EXISTS airlinebooking.passengers CASCADE;
+DROP TABLE IF EXISTS airlinebooking.airports CASCADE;
+
+
+-- =================================================================
+-- 1. AIRPORTS
+-- =================================================================
+
+CREATE TABLE airlinebooking.airports (
+    airport_id      INTEGER GENERATED ALWAYS AS IDENTITY,
+    name            VARCHAR(100) NOT NULL,
+    airport_code    VARCHAR(10) NOT NULL,
+    city            VARCHAR(100) NOT NULL,
+    country         VARCHAR(100) NOT NULL,
+
+    CONSTRAINT pk_airports
+        PRIMARY KEY (airport_id),
+
+    CONSTRAINT uq_airports_airport_code
+        UNIQUE (airport_code)
+);
+
+
+-- =================================================================
+-- 2. PASSENGERS
+-- =================================================================
+
+CREATE TABLE airlinebooking.passengers (
+    passenger_id    INTEGER GENERATED ALWAYS AS IDENTITY,
+    first_name      VARCHAR(100) NOT NULL,
+    last_name       VARCHAR(100) NOT NULL,
+    email           VARCHAR(255) NOT NULL,
+
+    CONSTRAINT pk_passengers
+        PRIMARY KEY (passenger_id),
+
+    CONSTRAINT uq_passengers_email
+        UNIQUE (email),
+
+    CONSTRAINT chk_passengers_email
+        CHECK (
+            email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+        )
+);
+
+
+-- =================================================================
+-- 3. FLIGHT_ROUTES
+-- =================================================================
+
+CREATE TABLE airlinebooking.flight_routes (
+    flight_route_id         INTEGER GENERATED ALWAYS AS IDENTITY,
+    origin_airport_id       INTEGER NOT NULL,
+    destination_airport_id  INTEGER NOT NULL,
+
+    CONSTRAINT pk_flight_routes
+        PRIMARY KEY (flight_route_id),
+
+    CONSTRAINT fk_flight_routes_origin
+        FOREIGN KEY (origin_airport_id)
+        REFERENCES airlinebooking.airports(airport_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_flight_routes_destination
+        FOREIGN KEY (destination_airport_id)
+        REFERENCES airlinebooking.airports(airport_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT chk_flight_routes_different_airports
+        CHECK (origin_airport_id <> destination_airport_id)
+);
+
+
+-- =================================================================
+-- 4. FLIGHTS
+-- =================================================================
+
+CREATE TABLE airlinebooking.flights (
+    flight_number               VARCHAR(20),
+    flight_route_id             INTEGER NOT NULL,
+    departure_datetime          TIMESTAMP NOT NULL,
+    arrival_datetime            TIMESTAMP NOT NULL,
+    seating_capacity            INTEGER NOT NULL,
+    number_of_available_seats   INTEGER NOT NULL,
+
+    CONSTRAINT pk_flights
+        PRIMARY KEY (flight_number),
+
+    CONSTRAINT fk_flights_flight_route
+        FOREIGN KEY (flight_route_id)
+        REFERENCES airlinebooking.flight_routes(flight_route_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT chk_flights_arrival_after_departure
+        CHECK (arrival_datetime > departure_datetime),
+
+    CONSTRAINT chk_flights_seating_capacity
+        CHECK (seating_capacity > 0),
+
+    CONSTRAINT chk_flights_available_seats_nonnegative
+        CHECK (number_of_available_seats >= 0),
+
+    CONSTRAINT chk_flights_available_seats_capacity
+        CHECK (number_of_available_seats <= seating_capacity)
+);
+
+
+-- =================================================================
+-- 5. BOOKINGS
+-- =================================================================
+
+CREATE TABLE airlinebooking.bookings (
+    booking_id          INTEGER GENERATED ALWAYS AS IDENTITY,
+    passenger_id        INTEGER NOT NULL,
+    flight_number       VARCHAR(20) NOT NULL,
+    booking_datetime    TIMESTAMP NOT NULL,
+    fare_paid           NUMERIC(10,2) NOT NULL,
+
+    CONSTRAINT pk_bookings
+        PRIMARY KEY (booking_id),
+
+    CONSTRAINT fk_bookings_passenger
+        FOREIGN KEY (passenger_id)
+        REFERENCES airlinebooking.passengers(passenger_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_bookings_flight
+        FOREIGN KEY (flight_number)
+        REFERENCES airlinebooking.flights(flight_number)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT chk_bookings_fare_paid
+        CHECK (fare_paid >= 0)
+);
