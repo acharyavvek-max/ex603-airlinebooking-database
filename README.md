@@ -1,4 +1,15 @@
 # Airline Booking System
+## Unit 4: Aggregation and Reporting — Query Catalogue
+
+| Task | Query | Business Question |
+|---|---|---|
+| 4.1.1 | Overall Booking Statistics | What are the total bookings, total revenue, average fare, minimum and maximum fares, and number of unique passengers? |
+| 4.1.2 | Per-Flight Aggregation | Which flights have the highest booking volumes, and how do their average fares compare? |
+| 4.1.3 | High-Volume Flights | Which flights have booking volumes at or above the average bookings per flight? |
+| 4.1.4 | Regional Booking Breakdown | How do booking volumes and statuses vary across countries? |
+| 4.2 Part A | Conditional Aggregation | How many bookings and passenger no-shows does each flight have? |
+| 4.2 Part B | Regional Subtotals and Grand Total | How much booking revenue does each country generate, and what is the total platform revenue? |
+| 4.2 Part C | Two-Step CTE Pipeline | Which flights meet the booking-volume threshold, and how do their no-show rates compare with the overall baseline? |
 
 ## Schema
 
